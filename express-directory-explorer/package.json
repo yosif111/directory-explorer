@@ -9,7 +9,6 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
-        "express": "^4.17.1",
-        "recursive-readdir": "^2.2.2"
+        "express": "^4.17.1"
     }
 }
