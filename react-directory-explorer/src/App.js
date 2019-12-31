@@ -1,13 +1,16 @@
 import React from 'react';
-import logo from './logo.svg';
 import Container from '@material-ui/core/Container';
 import FolderList from './pages/FolderList'
+import { Browser } from "react-window-ui";
+
 import './App.css';
 
 function App() {
   return (
     <Container maxWidth="lg" className="App">
-      <FolderList></FolderList>
+        <Browser className="BrowserWindow" >
+          <FolderList></FolderList>
+        </Browser>
     </Container>
   );
 }

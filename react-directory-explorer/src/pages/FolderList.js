@@ -1,49 +1,102 @@
 import React from 'react';
-import { makeStyles } from '@material-ui/core/styles';
-import ListSubheader from '@material-ui/core/ListSubheader';
 import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import Collapse from '@material-ui/core/Collapse';
-import ExpandLess from '@material-ui/icons/ExpandLess';
-import ExpandMore from '@material-ui/icons/ExpandMore';
-
-const useStyles = makeStyles(theme => ({
-    root: {
-        width: '100%',
-        maxWidth: 360
-    },
-    nested: {
-        paddingLeft: theme.spacing(4),
-    },
-}));
+import ListSubheader from '@material-ui/core/ListSubheader';
+import TextField from '@material-ui/core/TextField';
+import CustomListItem from '../components/CustomListItem'
+import { BASE_URL } from '../config'
 
 
-export default function FolderList() {
-    const classes = useStyles();
+const styles = {
+  root: {
+    width: '100%'
+  }
+}
 
-    const handleClick = () => {
-        console.log("handleClick")
+export default class FolderList extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      directoryList: [],
+      currentPath: '/',
+      error: false,
+      errorMessage: ''
     };
+  }
+
+  fetchDirectory = () => {
+    fetch(`${BASE_URL}/directory?path=${this.state.currentPath}`)
+      .then(async res => {
+        if (res.status !== 200) {
+          console.error("error:", res.statusText)
+          this.setState({ directoryList: [], error: true, errorMessage: `An error occured: ${res.statusText}` })
+          return;
+        }
+
+        const result = await res.json()
+        console.log("result", result)
+        this.setState({ directoryList: result, error: false });
+
+      }).catch(error => {
+        console.error("error:", error)
+        this.setState({ directoryList: [], error: true, errorMessage: `An error occured: ${error}` })
+      }
+      )
+  }
+
+  componentDidMount() {
+    this.fetchDirectory()
+  }
+
+  onFolderClick = (index) => {
+    this.setState(
+      { currentPath: `${this.state.currentPath}/${this.state.directoryList[index].path}` },
+      this.fetchDirectory
+    )
+  }
+
+  onEnterKeyPressed = (event) => {
+    if (event.key === 'Enter') {
+      this.fetchDirectory()
+    }
+  }
+
+  renderListSubheader = () => {
+    return (
+      <ListSubheader component="div" id="nested-list-subheader" disableSticky>
+        <TextField
+          id="standard-full-width"
+          style={{ margin: 8 }}
+          placeholder="Location"
+          fullWidth
+          margin="normal"
+          value={this.state.currentPath}
+          onChange={(event) => this.setState({ currentPath: event.target.value })}
+          onKeyUp={(event) => this.onEnterKeyPressed(event)}
+        />
+      </ListSubheader>
+    )
+  }
+  renderDirectory = () => {
+
+    if (this.state.error) {
+      return <h1>{this.state.errorMessage}</h1>
+    }
+
+    return this.state.directoryList.map((element, index) => {
+      return <CustomListItem key={index} name={element.path} isFolder={element.isFolder} size={element.size} onClick={element.isFolder ? () => this.onFolderClick(index) : null} />
+    })
+  }
+
+  render() {
 
     return (
-        <List
-            component="nav"
-            aria- labelledby="nested-list-subheader"
-            className={classes.root} >
-
-            <ListItem button>
-                <ListItemText primary="Sent mail" />
-            </ListItem>
-
-            <ListItem button>
-                <ListItemText primary="Drafts" />
-            </ListItem>
-
-            <ListItem button onClick={handleClick}>
-                <ListItemText primary="Inbox" />
-            </ListItem>
-        </List >
+      <List
+        component="nav"
+        style={styles.root}
+        subheader={this.renderListSubheader()}>
+        {this.renderDirectory()}
+      </List >
     );
+  }
 }
 
